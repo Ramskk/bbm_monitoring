@@ -38,7 +38,7 @@ class OperationalController extends Controller
             $query->where('user_id', auth()->id());
         }
 
-        $transaksi = $query->orderBy('tanggal_pemakaian', 'desc')
+        $transaksiList = $query->orderBy('tanggal_pemakaian', 'desc')
             ->paginate(10);
 
         $kendaraanList = Kendaraan::where('status', 'Aktif')
@@ -48,7 +48,7 @@ class OperationalController extends Controller
         $stokList = Stok::with('bbm')->get();
 
         return view('operational.index', compact(
-            'transaksi', 'kendaraanList', 'stokList',
+            'transaksiList', 'kendaraanList', 'stokList',
             'dari', 'sampai', 'status'
         ));
     }
