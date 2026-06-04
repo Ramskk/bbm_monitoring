@@ -65,7 +65,7 @@ class ApprovalController extends Controller
         $validated = $request->validated();
 
         $keputusan = $validated['keputusan'];
-        $catatan = $validated['catatan'] ?? null;
+        $catatan = $validated['catatan'] ?? '';
 
         $approval = isset($validated['approval_id'])
             ? Approval::find($validated['approval_id'])

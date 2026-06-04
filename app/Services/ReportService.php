@@ -23,7 +23,7 @@ class ReportService
 
         return [
             'totalKendaraan' => Kendaraan::count(),
-            'totalKendaraanAktif' => Kendaraan::where('status', 'aktif')->count(),
+            'totalKendaraanAktif' => Kendaraan::where('status', 'Aktif')->count(),
             'transaksiMonth' => (clone $transaksiBulanIni)->count(),
             'totalLitersMonth' => round((float) (clone $transaksiBulanIni)->sum('jumlah_liter'), 2),
             'stokKritis' => StockService::getStokKritis(),

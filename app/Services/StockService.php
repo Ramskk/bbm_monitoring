@@ -93,17 +93,17 @@ class StockService
                 throw new \RuntimeException("Stok untuk BBM {$bbm->nama} tidak ditemukan.");
             }
 
-            // Cek kapasitas maksimum
-            if ($stok->jumlah + $jumlahLiter > $stok->stok_maksimum) {
-                throw new \RuntimeException(
-                    "Stok {$bbm->nama} tidak dapat ditambahkan. Stok saat ini: {$stok->jumlah} liter, kapasitas maksimum: {$stok->stok_maksimum} liter, yang ingin ditambahkan: {$jumlahLiter} liter."
-                );
-            }
-
             // Lock stok untuk mencegah race condition
             $stok = Stok::lockForUpdate()->where('bbm_id', $bbmId)->first();
             if (! $stok) {
                 throw new \RuntimeException("Stok untuk BBM {$bbm->nama} tidak ditemukan.");
+            }
+
+            // Cek kapasitas maksimum berdasarkan data yang sudah dikunci
+            if ($stok->jumlah + $jumlahLiter > $stok->stok_maksimum) {
+                throw new \RuntimeException(
+                    "Stok {$bbm->nama} tidak dapat ditambahkan. Stok saat ini: {$stok->jumlah} liter, kapasitas maksimum: {$stok->stok_maksimum} liter, yang ingin ditambahkan: {$jumlahLiter} liter."
+                );
             }
 
             $stokSebelum = $stok->jumlah;
