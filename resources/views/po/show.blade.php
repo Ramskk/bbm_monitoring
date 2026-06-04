@@ -75,7 +75,7 @@
                             <div class="absolute left-[-4px] top-1.5 w-2.5 h-2.5 rounded-full {{ $po->status === 'approved' ? 'bg-green-500' : 'bg-gray-200' }}"></div>
                             <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
                                 <p class="font-bold text-gray-800">Approved</p>
-                                <p class="text-sm text-gray-600">{{ $po->approved_at->format('d M Y') ?? '-' }}</p>
+                                <p class="text-sm text-gray-600">{{ $po->approved_at?->format('d M Y') ?? '-' }}</p>
                             </div>
                         </div>
                         <div class="relative pl-6">
@@ -83,7 +83,7 @@
                             <div class="absolute left-[-4px] top-1.5 w-2.5 h-2.5 rounded-full {{ $po->status === 'dikirim' ? 'bg-blue-500' : 'bg-gray-200' }}"></div>
                             <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
                                 <p class="font-bold text-gray-800">Dikirim</p>
-                                <p class="text-sm text-gray-600">{{ $po->tanggal_kirim_aktual->format('d M Y') ?? '-' }}</p>
+                                <p class="text-sm text-gray-600">{{ $po->tanggal_kirim_aktual?->format('d M Y') ?? '-' }}</p>
                             </div>
                         </div>
                         <div class="relative pl-6">
@@ -91,7 +91,7 @@
                             <div class="absolute left-[-4px] top-1.5 w-2.5 h-2.5 rounded-full {{ $po->status === 'diterima' ? 'bg-green-500' : 'bg-gray-200' }}"></div>
                             <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
                                 <p class="font-bold text-gray-800">Diterima</p>
-                                <p class="text-sm text-gray-600">{{ $po->tanggal_terima->format('d M Y') ?? '-' }}</p>
+                                <p class="text-sm text-gray-600">{{ $po->tanggal_terima?->format('d M Y') ?? '-' }}</p>
                             </div>
                         </div>
                         <div class="relative pl-6">
@@ -99,7 +99,7 @@
                             <div class="absolute left-[-4px] top-1.5 w-2.5 h-2.5 rounded-full {{ $po->status === 'closed' ? 'bg-gray-500' : 'bg-gray-200' }}"></div>
                             <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
                                 <p class="font-bold text-gray-800">Closed</p>
-                                <p class="text-sm text-gray-600">{{ $po->tanggal_terima->format('d M Y') ?? '-' }}</p>
+                                <p class="text-sm text-gray-600">{{ $po->tanggal_terima?->format('d M Y') ?? '-' }}</p>
                             </div>
                         </div>
                     </div>
