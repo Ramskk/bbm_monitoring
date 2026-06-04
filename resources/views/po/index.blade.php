@@ -159,14 +159,6 @@
                                         <a href="{{ route('po.show', $po) }}" class="btn btn-outline-primary" title="Lihat Detail">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        @if($po->status === 'draft')
-                                            <a href="{{ route('po.edit', $po) }}" class="btn btn-outline-warning" title="Edit">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
-                                        @endif
-                                        <button class="btn btn-outline-danger" onclick="confirmDelete({{ $po->id }})" title="Hapus">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -202,19 +194,5 @@
         </div>
     </div>
 
-    <!-- Delete Form -->
-    <form id="deleteForm" method="POST" style="display: none;">
-        @csrf
-        @method('DELETE')
-    </form>
 
-    <script>
-        function confirmDelete(poId) {
-            if (confirm('Apakah Anda yakin ingin menghapus PO ini?')) {
-                const form = document.getElementById('deleteForm');
-                form.action = `/po/${poId}`;
-                form.submit();
-            }
-        }
-    </script>
 </x-app-layout>
