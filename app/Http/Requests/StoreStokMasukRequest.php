@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Models\BBM;
 use App\Models\Stok;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreStokMasukRequest extends FormRequest
@@ -19,7 +20,7 @@ class StoreStokMasukRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -36,22 +37,22 @@ class StoreStokMasukRequest extends FormRequest
     {
         $bbm = BBM::find($this->bbm_id);
 
+        if (! $bbm) {
+            return;
+        }
+
+        $stok = Stok::where('bbm_id', $bbm->id)->first();
+        $maksimum = $stok?->stok_maksimum;
+
         // Cek stok tidak melebihi kapasitas maksimum
-        if (!$bbm || $bbm->stok_maksimum && $this->jumlah > $bbm->stok_maksimum) {
-            $validator->errors()->add('jumlah', "Jumlah melebihi kapasitas maksimum {$bbm->stok_maksimum} liter.");
+        if ($maksimum && (($stok->jumlah + (float) $this->jumlah) > $maksimum)) {
+            $validator->errors()->add('jumlah', "Jumlah melebihi kapasitas maksimum {$maksimum} liter.");
         }
 
-        // Cek referensi valid
-        $refNo = $this->input('referensi_no') ?? null;
-        $refType = $this->input('referensi_type') ?? null;
-        $refId = $this->input('referensi_id') ?? null;
-
-        if ($refType === 'PO' && $refNo && $refId) {
-            $validator->rules('referensi_no', 'exists:po,no_po');
+        // Validasi harga per liter (jika diisi)
+        $price = $this->input('harga_per_liter');
+        if ($price !== null && (! is_numeric($price) || (float) $price < 0)) {
+            $validator->errors()->add('harga_per_liter', 'Harga per liter tidak valid.');
         }
-
-        // Validasi harga per liter
-        $price = $this->input('harga_per_liter') ?? 0;
-        $validator->rules('harga_per_liter', 'numeric|min:0');
     }
 }

@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Vendor;
 use App\Http\Requests\StoreVendorRequest;
+use App\Models\Vendor;
+use App\Services\AuditLogService;
 use Illuminate\Http\Request;
 
 class VendorController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Vendor::whereNull('deleted_at');
+        $query = Vendor::query();
 
         // Filter by status
         $status = $request->input('status');

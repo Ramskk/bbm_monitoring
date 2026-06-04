@@ -38,7 +38,11 @@
                         </div>
                     @endif
 
-                    @yield('content')
+                    @hasSection('content')
+                        @yield('content')
+                    @else
+                        {{ $slot ?? '' }}
+                    @endif
                 </div>
             </main>
         </div>

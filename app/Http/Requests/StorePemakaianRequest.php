@@ -5,9 +5,8 @@ namespace App\Http\Requests;
 use App\Models\BBM;
 use App\Models\Kendaraan;
 use App\Models\Stok;
-use App\Models\TransaksiBBM;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class StorePemakaianRequest extends FormRequest
 {
@@ -22,7 +21,7 @@ class StorePemakaianRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -40,8 +39,13 @@ class StorePemakaianRequest extends FormRequest
     public function withValidator($validator): void
     {
         $vehicle = Kendaraan::find($this->kendaraan_id);
+
+        if (! $vehicle) {
+            return;
+        }
+
         $bbm = BBM::find($vehicle->bbm_id);
-        $stok = Stok::find($bbm->id);
+        $stok = $bbm ? Stok::where('bbm_id', $bbm->id)->first() : null;
 
         // Cek odometer tidak turun
         if ($vehicle->odometer_terakhir > $this->odometer_sesudah) {
@@ -54,13 +58,13 @@ class StorePemakaianRequest extends FormRequest
         }
 
         // Cek kendaraan aktif
-        if (!$vehicle->is_active) {
+        if ($vehicle->status !== 'Aktif') {
             $validator->errors()->add('kendaraan_id', 'Kendaraan tidak aktif.');
         }
 
         // Cek stok cukup
-        if (!$stok || $stok->jumlah < $this->jumlah_liter) {
-            $validator->errors()->add('jumlah_liter', "Stok {$bbm->nama} tidak cukup.");
+        if (! $stok || $stok->jumlah < $this->jumlah_liter) {
+            $validator->errors()->add('jumlah_liter', 'Stok '.($bbm->nama ?? '').' tidak cukup.');
         }
     }
 }

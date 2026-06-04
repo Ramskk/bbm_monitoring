@@ -10,13 +10,11 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Departemen</label>
                         <select name="departemen" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             <option value="">Semua Departemen</option>
-                            @if($data->exists('departemen'))
-                                @foreach(array_unique($data->pluck('departemen')) as $d)
-                                    <option value="{{ $d }}" {{ request('departemen') === $d ? 'selected' : '' }}>
-                                        {{ $d }}
-                                    </option>
-                                @endforeach
-                            @endif
+                            @foreach($data->pluck('departemen')->filter()->unique() as $d)
+                                <option value="{{ $d }}" {{ request('departemen') === $d ? 'selected' : '' }}>
+                                    {{ $d }}
+                                </option>
+                            @endforeach
                         </select>
                     </div>
                     <div class="mt-4">

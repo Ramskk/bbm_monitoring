@@ -2,19 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\BBM;
-use App\Models\Stok;
-use App\Models\TransaksiBBM;
-use App\Models\PO;
-use App\Models\MutasiStok;
 use App\Http\Requests\StoreBBMRequest;
+use App\Models\BBM;
+use App\Models\PO;
+use App\Models\Stok;
+use App\Services\AuditLogService;
 use Illuminate\Http\Request;
 
 class BBMController extends Controller
 {
     public function index(Request $request)
     {
-        $query = BBM::whereNull('deleted_at');
+        $query = BBM::query();
 
         // Filter by jenis
         $jenis = $request->input('jenis');
@@ -45,11 +44,11 @@ class BBMController extends Controller
 
         // Auto-create record Stok
         Stok::create([
-            'bbm_id'    => $bbm->id,
-            'jumlah'    => 0,
+            'bbm_id' => $bbm->id,
+            'jumlah' => 0,
             'stok_minimum' => $bbm->stok_minimum ?? 0,
             'stok_maksimum' => $bbm->stok_maksimum ?? 0,
-            'lokasi'    => $bbm->lokasi ?? '',
+            'lokasi' => $bbm->lokasi ?? '',
         ]);
 
         AuditLogService::log('create', $bbm, null, null, $request->validated(), 'BBM baru dibuat');
@@ -91,7 +90,7 @@ class BBMController extends Controller
         }
 
         // Cek stok
-        if ($bbm->stok->exists()) {
+        if ($bbm->stok()->exists()) {
             abort(403, 'Tidak bisa hapus BBM yang memiliki stok.');
         }
 

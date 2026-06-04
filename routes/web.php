@@ -1,16 +1,17 @@
 <?php
 
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\OperationalController;
-use App\Http\Controllers\GudangController;
-use App\Http\Controllers\POController;
-use App\Http\Controllers\VendorController;
 use App\Http\Controllers\ApprovalController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BBMController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\GudangController;
+use App\Http\Controllers\KendaraanController;
+use App\Http\Controllers\OperationalController;
+use App\Http\Controllers\POController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\KendaraanController;
-use App\Http\Controllers\BBMController;
+use App\Http\Controllers\VendorController;
 use Illuminate\Support\Facades\Route;
 
 // ── Auth ────────────────────────────────────────────────
@@ -26,7 +27,12 @@ Route::middleware(['auth'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
-    Route::get('/', fn() => redirect()->route('dashboard'));
+    Route::get('/', fn () => redirect()->route('dashboard'));
+
+    // Profile
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Operasional BBM
     Route::prefix('operational')->name('operational.')->group(function () {

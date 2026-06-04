@@ -2,9 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Approval;
-use App\Models\PO;
-use App\Models\TransaksiBBM;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ApprovalRequest extends FormRequest
@@ -20,11 +18,12 @@ class ApprovalRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
+            'approval_id' => 'nullable|exists:approval,id',
             'keputusan' => 'required|in:approved,rejected',
             'catatan' => 'required_if:keputusan,rejected',
         ];
@@ -39,12 +38,12 @@ class ApprovalRequest extends FormRequest
 
         // Security: keputusan hanya boleh 'approved' atau 'rejected'
         // Tidak boleh value bebas dari frontend
-        if (!in_array($keputusan, ['approved', 'rejected'])) {
+        if (! in_array($keputusan, ['approved', 'rejected'])) {
             $validator->errors()->add('keputusan', 'Keputusan hanya boleh "approved" atau "rejected".');
         }
 
         // Catatan required jika keputusan rejected
-        if ($keputusan === 'rejected' && !$this->has('catatan')) {
+        if ($keputusan === 'rejected' && ! $this->has('catatan')) {
             $validator->errors()->add('catatan', 'Catatan diperlukan saat menolak.');
         }
     }

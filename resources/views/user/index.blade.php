@@ -8,7 +8,7 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
                             <select name="role" id="role" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 <option value="">Semua Role</option>
-                                @foreach(app('permission')->roles() as $r)
+                                @foreach(\Spatie\Permission\Models\Role::all() as $r)
                                     <option value="{{ $r->id }}">{{ $r->name }}</option>
                                 @endforeach
                             </select>

@@ -2,20 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Kendaraan;
-use App\Models\BBM;
-use App\Models\Stok;
-use App\Models\TransaksiBBM;
-use App\Models\Approval;
-use App\Models\MutasiStok;
 use App\Http\Requests\StoreKendaraanRequest;
+use App\Models\BBM;
+use App\Models\Kendaraan;
+use App\Models\TransaksiBBM;
+use App\Services\AuditLogService;
 use Illuminate\Http\Request;
 
 class KendaraanController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Kendaraan::whereNull('deleted_at');
+        $query = Kendaraan::query();
 
         // Filter by status
         $status = $request->input('status');
@@ -36,7 +34,7 @@ class KendaraanController extends Controller
         }
 
         // Non-admin hanya lihat kendaraan sendiri
-        if (!auth()->user()->hasAnyRole(['admin', 'super_admin'])) {
+        if (! auth()->user()->hasAnyRole(['admin', 'super_admin'])) {
             $query->where('departemen', auth()->user()->departemen);
         }
 
@@ -48,8 +46,7 @@ class KendaraanController extends Controller
 
     public function create(Request $request)
     {
-        $bbmList = BBM::whereNotNull('deleted_at')
-            ->where('is_active', true)
+        $bbmList = BBM::where('is_active', true)
             ->with('stok')
             ->get();
 
@@ -66,13 +63,13 @@ class KendaraanController extends Controller
 
     public function show(Kendaraan $kendaraan)
     {
-        $transaksi = $kendaraan->transaksi
+        $transaksi = $kendaraan->transaksi()
             ->where('tanggal_pemakaian', '>=', now()->subDays(30))
             ->where('tanggal_pemakaian', '<=', now())
             ->orderBy('tanggal_pemakaian', 'desc')
             ->get();
 
-        $mutasi = $kendaraan->transaksi
+        $mutasi = $kendaraan->transaksi()
             ->where('tanggal_pemakaian', '>=', now()->subMonths(3))
             ->where('tanggal_pemakaian', '<=', now())
             ->with('approval')
