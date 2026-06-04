@@ -1,0 +1,42 @@
+name: JAN AI
+version: 1.0.0
+schema: v1
+
+models:
+  - name: Qwopus3.5:4b
+    provider: lmstudio
+    model: model.gguf
+    apiBase: http://127.0.0.1:1337/v1
+    apiKey: jan-local
+    roles:
+      - chat
+      - edit
+      - apply
+    capabilities:
+      - tool_use
+    defaultCompletionOptions:
+      contextLength: 8192
+      maxTokens: 2048
+      temperature: 0.7
+    requestOptions:
+      timeout: 120000
+
+context:
+  - provider: code
+  - provider: diff
+  - provider: file
+
+systemMessage: >
+  You are my personal AI assistant.
+  Update memory automatically each what you do.
+  Save only stable, reusable, non-sensitive information.
+  Do not save temporary details, raw reasoning, or secrets.
+
+  Be accurate, concise, and practical.
+  Give conclusions first.
+  Identify root cause before fixes.
+  Use filesystem before making coding assumptions.
+  Use search only for current or external information.
+  Follow existing project conventions.
+  Avoid filler and unnecessary explanations.
+  Prefer the smallest tool use that improves accuracy.

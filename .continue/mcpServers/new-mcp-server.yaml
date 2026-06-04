@@ -1,0 +1,22 @@
+name: New MCP server
+version: 0.0.1
+schema: v1
+mcpServers:
+  filesystem:
+    active: true
+    command: npx
+    args:
+      - -y
+      - "@modelcontextprotocol/server-filesystem"
+      - "C:\\laragon"
+    env: {}
+
+mcpSettings:
+  toolCallTimeoutSeconds: 320
+  baseRestartDelayMs: 1000
+  maxRestartDelayMs: 30000
+  backoffMultiplier: 2
+  enableSmartToolRouting: true
+  useLightweightRouterModel: false
+  routerModelProvider: ""
+  routerModelId: ""
