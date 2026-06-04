@@ -115,10 +115,14 @@
                             <i class="bi bi-plus-circle mr-2"></i> Buat PO Baru
                         </a>
                     @endif
-                    @if($po->status === 'approved' && $po->tanggal_kirim_rencana < now() || $po->tanggal_kirim_aktual < now())
-                        <a href="{{ route('po.close', $po) }}" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
-                            <i class="bi bi-check-circle mr-2"></i> Tutup PO
-                        </a>
+                    @if($po->status === 'approved')
+                        <form action="{{ route('po.close', $po) }}" method="POST" class="inline">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
+                                <i class="bi bi-check-circle mr-2"></i> Tutup PO
+                            </button>
+                        </form>
                     @endif
                 </div>
             </div>
