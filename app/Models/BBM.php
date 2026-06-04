@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class BBM extends Model
 {
@@ -40,7 +40,7 @@ class BBM extends Model
      */
     protected $casts = [
         'harga_per_liter' => 'integer',
-        'is_active'       => 'boolean',
+        'is_active' => 'boolean',
     ];
 
     /**
@@ -68,6 +68,7 @@ class BBM extends Model
     public function isStokKritis(): bool
     {
         $stok = Stok::where('bbm_id', $this->id)->first();
+
         return $stok
             && $stok->jumlah < $stok->stok_minimum;
     }
@@ -77,7 +78,7 @@ class BBM extends Model
      */
     public function stok(): HasOne
     {
-        return $this->hasOne(Stok::class);
+        return $this->hasOne(Stok::class, 'bbm_id');
     }
 
     /**
@@ -85,7 +86,7 @@ class BBM extends Model
      */
     public function transaksi(): HasMany
     {
-        return $this->hasMany(TransaksiBBM::class);
+        return $this->hasMany(TransaksiBBM::class, 'bbm_id');
     }
 
     /**
@@ -93,7 +94,7 @@ class BBM extends Model
      */
     public function po(): HasMany
     {
-        return $this->hasMany(PO::class);
+        return $this->hasMany(PO::class, 'bbm_id');
     }
 
     /**
@@ -101,7 +102,7 @@ class BBM extends Model
      */
     public function mutasiStok(): HasMany
     {
-        return $this->hasMany(MutasiStok::class);
+        return $this->hasMany(MutasiStok::class, 'bbm_id');
     }
 
     /**
@@ -109,6 +110,6 @@ class BBM extends Model
      */
     public function kendaraan(): HasMany
     {
-        return $this->hasMany(Kendaraan::class);
+        return $this->hasMany(Kendaraan::class, 'bbm_id');
     }
 }

@@ -2,14 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Stok;
-use App\Models\TransaksiBBM;
-use App\Models\MutasiStok;
+use App\Http\Requests\StoreStokMasukRequest;
 use App\Models\BBM;
-use App\Models\PO;
-use App\Services\StockService;
+use App\Models\MutasiStok;
+use App\Models\Stok;
 use App\Services\AuditLogService;
-use App\Models\Approval as ApprovalModel;
+use App\Services\StockService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -17,19 +15,18 @@ class GudangController extends Controller
 {
     public function index(Request $request)
     {
-        $stokList = Stok::all();
-        $mutasiTerbaru = MutasiStok::latest('tanggal')
-            ->whereNotNull('deleted_at')
+        $stokList = Stok::with('bbm')->get();
+
+        $mutasiTerbaru = MutasiStok::with('bbm')
+            ->latest('tanggal')
             ->limit(10)
             ->get();
 
-        $stokKritis = Stok::where('jumlah', '<', Stok::where('bbm_id', 'like', '%_minimum')->first()->jumlah ?? 0)
-            ->whereNotNull('deleted_at')
+        $stokKritis = Stok::whereColumn('jumlah', '<=', 'stok_minimum')
             ->with('bbm')
             ->get();
 
-        $stokPenuh = Stok::where('jumlah', '>=', Stok::where('bbm_id', 'like', '%_maksimum')->first()->jumlah ?? 0)
-            ->whereNotNull('deleted_at')
+        $stokPenuh = Stok::whereColumn('jumlah', '>=', 'stok_maksimum')
             ->with('bbm')
             ->get();
 
@@ -42,52 +39,51 @@ class GudangController extends Controller
         $dari = $request->input('dari', now()->subDays(30));
         $sampai = $request->input('sampai', now());
 
-        $mutasi = MutasiStok::whereNotNull('deleted_at')
+        $query = MutasiStok::with('bbm')
             ->where('tanggal', '>=', $dari)
-            ->where('tanggal', '<=', $sampai)
-            ->orderBy('tanggal', 'desc')
-            ->get();
+            ->where('tanggal', '<=', $sampai);
+
+        if ($stokId) {
+            $query->where('stok_id', $stokId);
+        }
+
+        $mutasi = $query->orderBy('tanggal', 'desc')->get();
 
         return response()->json([
             'success' => true,
-            'data'    => $mutasi,
+            'data' => $mutasi,
         ]);
     }
 
     public function formStokMasuk(Request $request)
     {
-        $bbmList = BBM::whereNotNull('deleted_at')
-            ->where('is_active', true)
+        $bbmList = BBM::where('is_active', true)
             ->with('stok')
             ->get();
 
         return view('gudang.stok_masuk', compact('bbmList'));
     }
 
-    public function stokMasuk(Request $request)
+    public function stokMasuk(StoreStokMasukRequest $request)
     {
         DB::beginTransaction();
 
         try {
-            $validated = $request->validate($request->route()->getValidatorInstance());
+            $validated = $request->validated();
 
-            $bbm = BBM::find($validated['bbm_id']);
-            $stok = Stok::find($bbm->id);
-
-            // Cek stok tidak melebihi kapasitas maksimum
-            if ($bbm->stok_maksimum && $validated['jumlah'] > $bbm->stok_maksimum) {
-                throw new \Exception("Jumlah melebihi kapasitas maksimum {$bbm->stok_maksimum} liter.");
-            }
+            $bbm = BBM::findOrFail($validated['bbm_id']);
 
             // Tambah stok via service
             StockService::tambahStok(
                 $bbm->id,
-                $validated['jumlah'],
-                $validated['harga_per_liter'] ?? $bbm->harga_per_liter,
-                $validated['referensi_no'] ?? null,
-                $validated['referensi_type'] ?? null,
-                $validated['referensi_id'] ?? null
+                (float) $validated['jumlah'],
+                (float) ($request->input('harga_per_liter') ?? $bbm->harga_per_liter),
+                (string) ($request->input('referensi_no') ?? ''),
+                (string) ($request->input('referensi_type') ?? 'manual'),
+                (int) ($request->input('referensi_id') ?? 0)
             );
+
+            $stok = Stok::where('bbm_id', $bbm->id)->first();
 
             AuditLogService::log('create', $stok, null, null, null, 'Stok masuk ditambahkan');
 
@@ -95,20 +91,27 @@ class GudangController extends Controller
 
             return redirect()->route('gudang.index')
                 ->with('success', 'Stok masuk berhasil ditambahkan.');
-
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
 
-            AuditLogService::log('error', $stok ?? null, null, null, null, 'Stok masuk gagal: ' . $e->getMessage());
-
             return redirect()->route('gudang.index')
-                ->with('error', 'Gagal menambahkan stok masuk.');
+                ->with('error', 'Gagal menambahkan stok masuk: '.$e->getMessage());
         }
     }
 
     public function updateBatasStok(Request $request, Stok $stok)
     {
-        $validated = $request->validate($request->route()->getValidatorInstance());
+        $validated = $request->validate([
+            'stok_minimum' => 'required|numeric|min:0',
+            'stok_maksimum' => 'required|numeric|gte:stok_minimum',
+            'lokasi' => 'nullable|string|max:255',
+        ]);
+
+        $before = [
+            'stok_minimum' => $stok->stok_minimum,
+            'stok_maksimum' => $stok->stok_maksimum,
+            'lokasi' => $stok->lokasi,
+        ];
 
         $stok->update([
             'stok_minimum' => $validated['stok_minimum'],
@@ -116,7 +119,7 @@ class GudangController extends Controller
             'lokasi' => $validated['lokasi'] ?? $stok->lokasi,
         ]);
 
-        AuditLogService::log('update', $stok, null, ['stok_minimum' => $stok->stok_minimum, 'stok_maksimum' => $stok->stok_maksimum, 'lokasi' => $stok->lokasi], $validated, 'Stok batas diperbarui');
+        AuditLogService::log('update', $stok, null, $before, $validated, 'Stok batas diperbarui');
 
         return redirect()->route('gudang.index')
             ->with('success', 'Stok batas berhasil diperbarui.');

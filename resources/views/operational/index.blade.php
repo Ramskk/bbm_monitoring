@@ -20,7 +20,7 @@
                         <label class="form-label">Kendaraan</label>
                         <select name="kendaraan_id" class="form-select">
                             <option value="">Semua Kendaraan</option>
-                            @if(isset($kendaraanList) && $kendaraanList->exists('id'))
+                            @if(isset($kendaraanList) && $kendaraanList->count())
                                 @foreach($kendaraanList->unique('id') as $k)
                                     <option value="{{ $k->id }}" {{ request('kendaraan_id') == $k->id ? 'selected' : '' }}>
                                         {{ $k->nama }} ({{ $k->nomor_polisi }})

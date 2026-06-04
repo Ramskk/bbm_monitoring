@@ -8,16 +8,17 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                             <select name="status" id="status" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 <option value="">Semua</option>
-                                <option value="aktif">Aktif</option>
-                                <option value="non_aktif">Non Aktif</option>
+                                <option value="Aktif">Aktif</option>
+                                <option value="Non_Aktif">Non Aktif</option>
+                                <option value="Dijual">Dijual</option>
                             </select>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Departemen</label>
                             <select name="departemen" id="departemen" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 <option value="">Semua</option>
-                                @if($kendaraanList->exists('departemen'))
-                                    @foreach(array_unique($kendaraanList->pluck('departemen')) as $d)
+                                @if($kendaraanList->count())
+                                    @foreach(array_unique($kendaraanList->pluck('departemen')->toArray()) as $d)
                                         <option value="{{ $d }}">{{ $d }}</option>
                                     @endforeach
                                 @endif

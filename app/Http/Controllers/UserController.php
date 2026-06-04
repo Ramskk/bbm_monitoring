@@ -2,20 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Http\Requests\StoreUserRequest;
+use App\Models\User;
+use App\Services\AuditLogService;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::whereNull('deleted_at');
+        $query = User::query()->with('roles');
 
         // Filter by role
         $role = $request->input('role');
         if ($role) {
-            $query->where('roles.id', $role);
+            $query->whereHas('roles', function ($q) use ($role) {
+                $q->where('id', $role);
+            });
         }
 
         // Filter by status
@@ -86,10 +89,10 @@ class UserController extends Controller
             abort(403, 'Tidak bisa mengubah status akun sendiri.');
         }
 
-        $user->is_active = !$user->is_active;
+        $user->is_active = ! $user->is_active;
         $user->save();
 
-        AuditLogService::log('update', $user, null, ['is_active' => $user->is_active], $request->validated(), 'Status user diubah');
+        AuditLogService::log('update', $user, null, ['is_active' => $user->is_active], null, 'Status user diubah');
 
         return redirect()->route('user.index')
             ->with('success', 'Status user berhasil diubah.');
@@ -97,7 +100,10 @@ class UserController extends Controller
 
     public function assignRole(Request $request, User $user)
     {
-        $validated = $request->validate($request->route()->getValidatorInstance());
+        $validated = $request->validate([
+            'roles' => 'required|array',
+            'roles.*' => 'exists:roles,id',
+        ]);
 
         $roles = $validated['roles'];
 

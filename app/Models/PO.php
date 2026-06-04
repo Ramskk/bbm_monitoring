@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Str;
 
 class PO extends Model
 {
@@ -50,15 +49,15 @@ class PO extends Model
      * @var array
      */
     protected $casts = [
-        'jumlah_liter'          => 'float',
-        'harga_per_liter'       => 'float',
-        'total_nilai'           => 'float',
-        'jumlah_diterima'       => 'float',
-        'tanggal_po'            => 'date',
+        'jumlah_liter' => 'float',
+        'harga_per_liter' => 'float',
+        'total_nilai' => 'float',
+        'jumlah_diterima' => 'float',
+        'tanggal_po' => 'date',
         'tanggal_kirim_rencana' => 'date',
-        'tanggal_kirim_aktual'  => 'date',
-        'tanggal_terima'        => 'date',
-        'approved_at'           => 'datetime',
+        'tanggal_kirim_aktual' => 'date',
+        'tanggal_terima' => 'date',
+        'approved_at' => 'datetime',
     ];
 
     /**
@@ -67,13 +66,13 @@ class PO extends Model
     public function statusBadge(): string
     {
         return match ($this->status) {
-            'draft'            => 'bg-secondary text-white',
-            'approved'         => 'bg-primary text-white',
-            'dikirim'          => 'bg-info text-white',
-            'diterima'         => 'bg-success text-white',
-            'closed'           => 'bg-secondary text-white',
-            'rejected'         => 'bg-danger text-white',
-            default            => 'bg-secondary text-white',
+            'draft' => 'bg-secondary text-white',
+            'approved' => 'bg-primary text-white',
+            'dikirim' => 'bg-info text-white',
+            'diterima' => 'bg-success text-white',
+            'closed' => 'bg-secondary text-white',
+            'rejected' => 'bg-danger text-white',
+            default => 'bg-secondary text-white',
         };
     }
 
@@ -85,6 +84,7 @@ class PO extends Model
         if ($this->status === 'dikirim' && $this->jumlah_diterima > 0) {
             return $this->jumlah_liter - $this->jumlah_diterima;
         }
+
         return 0;
     }
 
@@ -102,6 +102,19 @@ class PO extends Model
     public function isDraft(): bool
     {
         return $this->status === 'draft';
+    }
+
+    /**
+     * Generate nomor PO unik.
+     */
+    public static function generateNoPO(): string
+    {
+        return 'PO-'.date('Ymd').'-'.str_pad(
+            PO::count() + 1,
+            4,
+            '0',
+            STR_PAD_LEFT
+        );
     }
 
     /**
@@ -179,13 +192,13 @@ class PO extends Model
         $current = $this->status;
 
         return match ($current) {
-            'draft'            => in_array($newStatus, ['approved', 'dikirim'], true),
-            'approved'         => in_array($newStatus, ['dikirim', 'diterima'], true),
-            'dikirim'          => in_array($newStatus, ['diterima'], true),
-            'diterima'         => in_array($newStatus, ['closed'], true),
-            'closed'            => in_array($newStatus, [], true),
-            'rejected'          => in_array($newStatus, [], true),
-            default             => in_array($newStatus, ['draft'], true),
+            'draft' => in_array($newStatus, ['approved', 'dikirim'], true),
+            'approved' => in_array($newStatus, ['dikirim', 'diterima'], true),
+            'dikirim' => in_array($newStatus, ['diterima'], true),
+            'diterima' => in_array($newStatus, ['closed'], true),
+            'closed' => in_array($newStatus, [], true),
+            'rejected' => in_array($newStatus, [], true),
+            default => in_array($newStatus, ['draft'], true),
         };
     }
 

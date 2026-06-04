@@ -2,9 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Models\BBM;
-use App\Models\Vendor;
-use App\Models\PO;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StorePORequest extends FormRequest
@@ -20,7 +18,7 @@ class StorePORequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -37,10 +35,10 @@ class StorePORequest extends FormRequest
     /**
      * Prepare the data for validation.
      */
-    public function prepareForValidation(): array
+    protected function prepareForValidation(): void
     {
-        return array_merge(parent::prepareForValidation(), [
-            'total_nilai' => $this->jumlah_liter * $this->harga_per_liter,
+        $this->merge([
+            'total_nilai' => (float) $this->jumlah_liter * (float) $this->harga_per_liter,
         ]);
     }
 }
