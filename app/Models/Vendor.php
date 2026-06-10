@@ -11,18 +11,8 @@ class Vendor extends Model
 {
     use HasFactory, SoftDeletes;
 
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
     protected $table = 'vendor';
 
-    /**
-     * The array of attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
         'kode',
         'nama',
@@ -39,67 +29,79 @@ class Vendor extends Model
         'status',
     ];
 
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array
-     */
     protected $casts = [
         'status' => 'string',
     ];
 
     /**
-     * Get the badge for the vendor status.
+     * Relasi ke Purchase Order.
+     */
+    public function po(): HasMany
+    {
+        return $this->hasMany(PO::class, 'vendor_id');
+    }
+
+    /**
+     * Badge status.
      */
     public function statusBadge(): string
     {
         return match ($this->status) {
-            'aktif'    => 'bg-success text-white',
-            'non_aktif' => 'bg-secondary text-white',
-            default    => 'bg-warning text-white',
+            'Aktif' => 'bg-success text-white',
+            'Non_Aktif' => 'bg-secondary text-white',
+            default => 'bg-warning text-white',
         };
     }
 
     /**
-     * Check if the vendor is active.
+     * Status aktif.
      */
     public function isAktif(): bool
     {
-        return $this->status === 'aktif';
+        return $this->status === 'Aktif';
     }
 
     /**
-     * Get the purchase orders for this vendor.
-     */
-    public function po(): HasMany
-    {
-        return $this->hasMany(PurchaseOrder::class);
-    }
-
-    /**
-     * Get the active vendors.
+     * Scope vendor aktif.
      */
     public function scopeAktif($query)
     {
-        return $query->where('status', 'aktif');
+        return $query->where('status', 'Aktif');
     }
 
     /**
-     * Generate a new vendor code.
+     * Generate kode vendor.
      */
     public static function generateKode(): string
     {
-        $suffix = str_pad(Vendor::count() + 1, 3, '0', STR_PAD_LEFT);
-        return 'VND-' . $suffix;
+        $lastVendor = self::withTrashed()
+            ->orderByDesc('id')
+            ->first();
+
+        $nextNumber = $lastVendor
+            ? ((int) preg_replace('/[^0-9]/', '', $lastVendor->kode)) + 1
+            : 1;
+
+        return 'VND-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
     }
 
     /**
-     * Check if the vendor has active POs.
+     * Cek apakah vendor punya PO aktif.
      */
     public function hasActivePOs(): bool
     {
-        return $this->po()->where('status', '!=', 'closed')
-            ->whereNotNull('created_by')
+        return $this->po()
+            ->whereNotIn('status', ['Selesai', 'Dibatalkan'])
             ->exists();
+    }
+
+    /**
+     * Accessor badge.
+     */
+    public function getStatusBadgeAttribute(): string
+    {
+        return $this->status === 'Aktif'
+            ? 'Aktif'
+            : 'Non Aktif';
     }
 }

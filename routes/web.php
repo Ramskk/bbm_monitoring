@@ -95,7 +95,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Master Data
     Route::resource('kendaraan', KendaraanController::class);
-    Route::resource('bbm', BBMController::class)->except(['show', 'destroy']);
+    Route::resource('bbm', BBMController::class)->except(['show']);
     Route::resource('vendor', VendorController::class);
 
     // User Management

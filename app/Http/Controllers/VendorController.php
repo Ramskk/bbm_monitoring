@@ -13,19 +13,16 @@ class VendorController extends Controller
     {
         $query = Vendor::query();
 
-        // Filter by status
-        $status = $request->input('status');
-        if ($status) {
-            $query->where('status', $status);
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
         }
 
-        $vendorList = $query->orderBy('nama', 'asc')
-            ->paginate(10);
+        $vendorList = $query->orderBy('nama', 'asc')->paginate(10);
 
         return view('vendor.index', compact('vendorList'));
     }
 
-    public function create(Request $request)
+    public function create()
     {
         return view('vendor.form');
     }
@@ -56,11 +53,10 @@ class VendorController extends Controller
             ->with('success', 'Vendor berhasil diperbarui.');
     }
 
-    public function destroy(Request $request, Vendor $vendor)
+    public function destroy(Vendor $vendor)
     {
-        // Cek PO aktif
-        if ($vendor->po->count() > 0) {
-            abort(403, 'Tidak bisa hapus vendor yang memiliki PO aktif.');
+        if ($vendor->po()->count() > 0) {
+            abort(403, 'Tidak bisa hapus vendor yang memiliki PO.');
         }
 
         $vendor->delete();

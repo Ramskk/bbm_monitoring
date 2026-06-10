@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Models\BBM;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreBBMRequest extends FormRequest
 {
@@ -22,20 +23,29 @@ class StoreBBMRequest extends FormRequest
      */
     public function rules(): array
     {
-        $jenisList = BBM::distinct()->pluck('jenis');
-        $jenisList = array_map(function ($jenis) {
-            return "'$jenis'";
-        }, $jenisList);
+        // Ambil semua jenis BBM dari database
+        $jenisList = BBM::distinct()
+            ->pluck('jenis')
+            ->toArray();
 
         return [
             'kode' => [
-                Rule::unique('bbm', 'kode')->ignore($this->id)->whereNull('deleted_at'),
+                Rule::unique('bbm', 'kode')
+                    ->ignore($this->id)
+                    ->whereNull('deleted_at'),
             ],
+
             'nama' => 'required|string|max:100',
-            'jenis' => 'required|in:' . implode(',', $jenisList),
+
+            // Validasi langsung dari array (lebih aman & Laravel style)
+            'jenis' => ['required', Rule::in($jenisList)],
+
             'harga_per_liter' => 'required|numeric|min:0',
+
             'is_active' => 'boolean',
+
             'keterangan' => 'nullable|string|max:255',
+
             'deleted_at' => 'nullable|date',
         ];
     }

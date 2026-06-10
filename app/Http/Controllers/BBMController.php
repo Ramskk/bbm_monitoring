@@ -16,15 +16,13 @@ class BBMController extends Controller
         $query = BBM::query();
 
         // Filter by jenis
-        $jenis = $request->input('jenis');
-        if ($jenis) {
-            $query->where('jenis', $jenis);
+        if ($request->filled('jenis')) {
+            $query->where('jenis', $request->jenis);
         }
 
         // Filter by is_active
-        $aktif = $request->input('is_active');
-        if ($aktif !== null) {
-            $query->where('is_active', $aktif);
+        if ($request->has('is_active') && $request->is_active !== null) {
+            $query->where('is_active', $request->is_active);
         }
 
         $bbmList = $query->orderBy('nama', 'asc')
@@ -33,14 +31,28 @@ class BBMController extends Controller
         return view('bbm.index', compact('bbmList'));
     }
 
-    public function create(Request $request)
+    public function create()
     {
         return view('bbm.form');
     }
 
     public function store(StoreBBMRequest $request)
     {
-        $bbm = BBM::create($request->validated());
+        $data = $request->validated();
+
+        // ✅ FIX UTAMA: AUTO GENERATE KODE
+        $last = BBM::orderBy('id', 'desc')->first();
+
+        $nextNumber = 1;
+
+        if ($last && $last->kode) {
+            $number = (int) substr($last->kode, 4);
+            $nextNumber = $number + 1;
+        }
+
+        $data['kode'] = 'BBM-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+
+        $bbm = BBM::create($data);
 
         // Auto-create record Stok
         Stok::create([
@@ -51,9 +63,17 @@ class BBMController extends Controller
             'lokasi' => $bbm->lokasi ?? '',
         ]);
 
-        AuditLogService::log('create', $bbm, null, null, $request->validated(), 'BBM baru dibuat');
+        AuditLogService::log(
+            'create',
+            $bbm,
+            null,
+            null,
+            $data,
+            'BBM baru dibuat'
+        );
 
-        return redirect()->route('bbm.index')
+        return redirect()
+            ->route('bbm.index')
             ->with('success', 'Jenis BBM berhasil dibuat.');
     }
 
@@ -69,36 +89,66 @@ class BBMController extends Controller
 
     public function update(StoreBBMRequest $request, BBM $bbm)
     {
-        $bbm->update($request->validated());
+        $data = $request->validated();
 
-        AuditLogService::log('update', $bbm, null, null, $request->validated(), 'BBM diperbarui');
+        $bbm->update($data);
 
-        return redirect()->route('bbm.index')
+        AuditLogService::log(
+            'update',
+            $bbm,
+            null,
+            null,
+            $data,
+            'BBM diperbarui'
+        );
+
+        return redirect()
+            ->route('bbm.index')
             ->with('success', 'Jenis BBM berhasil diperbarui.');
     }
 
-    public function destroy(Request $request, BBM $bbm)
-    {
-        // Cek transaksi aktif
-        if ($bbm->transaksi->count() > 0) {
-            abort(403, 'Tidak bisa hapus BBM yang memiliki transaksi aktif.');
+public function destroy(BBM $bbm)
+{
+    try {
+
+        if ($bbm->transaksi()->exists()) {
+            return redirect()
+                ->route('bbm.index')
+                ->with('error', 'BBM tidak dapat dihapus karena sudah digunakan pada transaksi.');
         }
 
-        // Cek PO aktif
-        if ($bbm->po->count() > 0) {
-            abort(403, 'Tidak bisa hapus BBM yang memiliki PO aktif.');
+        if ($bbm->po()->exists()) {
+            return redirect()
+                ->route('bbm.index')
+                ->with('error', 'BBM tidak dapat dihapus karena digunakan pada Purchase Order.');
         }
 
-        // Cek stok
         if ($bbm->stok()->exists()) {
-            abort(403, 'Tidak bisa hapus BBM yang memiliki stok.');
+            return redirect()
+                ->route('bbm.index')
+                ->with('error', 'BBM tidak dapat dihapus karena masih memiliki stok.');
         }
+
+        AuditLogService::log(
+            'delete',
+            $bbm,
+            null,
+            null,
+            null,
+            'BBM dihapus'
+        );
 
         $bbm->delete();
 
-        AuditLogService::log('delete', $bbm, null, null, null, 'BBM dihapus');
-
-        return redirect()->route('bbm.index')
+        return redirect()
+            ->route('bbm.index')
             ->with('success', 'Jenis BBM berhasil dihapus.');
+
+    } catch (\Throwable $e) {
+
+        return redirect()
+            ->route('bbm.index')
+            ->with('error', $e->getMessage());
     }
+}
 }
